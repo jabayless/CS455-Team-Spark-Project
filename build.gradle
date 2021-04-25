@@ -1,0 +1,16 @@
+apply plugin: 'java'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies{
+    compile "org.apache.spark:spark-core_2.10:2.2.3"
+}
