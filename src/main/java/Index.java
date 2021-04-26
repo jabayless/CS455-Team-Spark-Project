@@ -39,6 +39,11 @@ public class Index<T extends Number & Comparable<T>> {
         public int compareTo(Pair<V> p) {
              return this.value.compareTo(p.value);
         }
+
+        @Override
+        public String toString() {
+            return "<" + id + ", " + value + ">";
+        }
     }
 
     private Double total = 0.0d;
@@ -58,7 +63,7 @@ public class Index<T extends Number & Comparable<T>> {
 
         double sumAbsXMinusMeanSq = 0.0f;
         for(Pair<T> entry: values) {
-            double xMinusMean = (double) entry.value - mean;
+            double xMinusMean = (Double) entry.value - mean;
             double absXMinusMean = Math.abs(xMinusMean);
             sumAbsXMinusMeanSq += Math.pow(absXMinusMean, 2);
         }
@@ -73,7 +78,7 @@ public class Index<T extends Number & Comparable<T>> {
             findStandardDev();
         }
 
-        double xMinusMean = (double) value - mean;
+        double xMinusMean = (Double) value - mean;
         return xMinusMean / standardDev;
     }
 
@@ -96,7 +101,7 @@ public class Index<T extends Number & Comparable<T>> {
     }
 
     public void addValue(String id, T value) {
-        total += (double) value;
+        total += (Double) value;
         values.add(new Pair<T>(id, value));
     }
 
