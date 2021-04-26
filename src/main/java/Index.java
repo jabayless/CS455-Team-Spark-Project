@@ -9,23 +9,26 @@ public class Index<T extends Number> {
         How to use
     ==================
     Creation:
-        new Index<[type of value]>();
+        new Index<T extends Number>();
 
     Adding Values:
-        index.addValue([value]);
+        index.addValue(String id, Number value);
 
     Finding Z-Score:
-        index.getZScore([value]);
+        index.getZScore(value);
 
     Getting all Z-Scores as List:
         index.getZScores();
 
+    Combining Z-Score Maps (static):
+        Index.combineZScores(Map<String, Double>...)
+
+    Other:
+      You can also find the mean directly or find the std dev:
+        index.findMean()
+        index.findStandardDev()
+
      */
-    public static class Pair<T extends Number, Comparable> {
-        public T value;
-        public String id;
-        public Pair(String id, T value) { this.value=value; this.id=id; }
-    }
 
     private Double total = 0.0d;
     private Double mean = 0.0d;
@@ -80,10 +83,14 @@ public class Index<T extends Number> {
         values.put(id, value);
     }
 
-    public Map<String, Double> combineZScores(Map<String, Double>... zScoreMaps) {
+    public static Map<String, Double> combineZScores(Map<String, Double>... zScoreMaps) {
         Map<String, Double> combinedZScoreMap = new HashMap<>();
         for(Map<String, Double> map: zScoreMaps) {
-
+            for(Map.Entry<String, Double> entry: map.entrySet()) {
+                double sumByKey = combinedZScoreMap.getOrDefault(entry.getKey(), 0.0d);
+                sumByKey += entry.getValue();
+                combinedZScoreMap.put(entry.getKey(), sumByKey);
+            }
         }
         return combinedZScoreMap;
     }
