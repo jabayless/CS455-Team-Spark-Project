@@ -9,16 +9,16 @@ public class Index<T extends Number & Comparable<T>> {
         How to use
     ==================
     Creation:
-        new Index<T extends Number>();
+        new Index<T extends Number & Comparable>();
 
     Adding Values:
         index.addValue(String id, Number value);
 
     Finding Z-Score:
-        index.getZScore(value);
+        Double zScore = index.getZScore(value);
 
     Getting all Z-Scores as List:
-        index.getZScores();
+        List<Pair<Double>> zScoreList = index.getZScores();
 
     Combining Z-Score Maps (static):
         Index.combineZScores(Map<String, Double>...)
@@ -37,7 +37,7 @@ public class Index<T extends Number & Comparable<T>> {
 
         @Override
         public int compareTo(Pair<V> p) {
-             return this.value.compareTo(p.value);
+            return this.value.compareTo(p.value);
         }
 
         @Override
