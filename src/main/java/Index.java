@@ -52,7 +52,7 @@ public class Index<T extends Number & Comparable<T>> {
     private final List<Pair<T>> values = new ArrayList<>();
 
     public double findMean() {
-        mean = values.size() / total;
+        mean = total / values.size();
         return mean;
     }
 
@@ -102,6 +102,7 @@ public class Index<T extends Number & Comparable<T>> {
 
     public void addValue(String id, T value) {
         total += (Double) value;
+        System.out.println((Double) value);
         values.add(new Pair<T>(id, value));
     }
 
@@ -138,30 +139,9 @@ public class Index<T extends Number & Comparable<T>> {
         happiness.addValue("Mobile", 8.5d);
         happiness.addValue("Chicago", 7.1d);
 
+        System.out.println(happiness.findStandardDev());
+        System.out.println(happiness.findMean());
         List<Pair<Double>> zScores = happiness.getZScores();
         System.out.println(zScores);
     }
-
-//    // Author: Chaitanya Singh
-//    // https://beginnersbook.com/2014/07/how-to-sort-a-treemap-by-value-in-java/
-//    public static <K, V extends Comparable<V>>
-//    Map<K, V> sortByValues(final Map<K, V> map) {
-//        Comparator<K> valueComparator =
-//                new Comparator<K>() {
-//                    public int compare(K k1, K k2) {
-//                        int compare =
-//                                map.get(k1).compareTo(map.get(k2));
-//                        if (compare == 0)
-//                            return 1;
-//                        else
-//                            return compare;
-//                    }
-//                };
-//
-//        Map<K, V> sortedByValues =
-//                new TreeMap<K, V>(valueComparator);
-//        sortedByValues.putAll(map);
-//        return sortedByValues;
-//    }
-
 }
