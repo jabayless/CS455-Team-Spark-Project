@@ -3,7 +3,7 @@ import org.apache.hadoop.util.hash.Hash;
 
 import java.util.*;
 
-public class Index<T extends Number> {
+public class Index<T extends Number & Comparable<T>> {
     /*
     ==================
         How to use
@@ -30,10 +30,21 @@ public class Index<T extends Number> {
 
      */
 
+    public static class Pair<V extends Number & Comparable<V>> implements Comparable<Pair<V>> {
+        public final String id;
+        public final V value;
+        public Pair(String id, V value) { this.id=id; this.value=value; }
+
+        @Override
+        public int compareTo(Pair<V> p) {
+             return this.value.compareTo(p.value);
+        }
+    }
+
     private Double total = 0.0d;
     private Double mean = 0.0d;
     private Double standardDev = 0.0d;
-    private final Map<String, T> values = new HashMap<>();
+    private final List<Pair<T>> values = new ArrayList<>();
 
     public double findMean() {
         mean = values.size() / total;
@@ -46,8 +57,8 @@ public class Index<T extends Number> {
         }
 
         double sumAbsXMinusMeanSq = 0.0f;
-        for(Map.Entry<String, T> entry: values.entrySet()) {
-            double xMinusMean = (double) entry.getValue() - mean;
+        for(Pair<T> entry: values) {
+            double xMinusMean = (double) entry.value - mean;
             double absXMinusMean = Math.abs(xMinusMean);
             sumAbsXMinusMeanSq += Math.pow(absXMinusMean, 2);
         }
@@ -67,60 +78,85 @@ public class Index<T extends Number> {
     }
 
     public double getZScoreById(String id) {
-        return getZScore(values.get(id));
+        for(Pair<T> pair: values) {
+            if(pair.id.equals(id)) {
+                return getZScore(pair.value);
+            }
+        }
+        return 0.0f;
     }
 
-    public Map<String, Double> getZScores() {
-        Map<String, Double> zScores = new HashMap<>();
-        for(Map.Entry<String, T> entry: values.entrySet()) {
-            zScores.put(entry.getKey(), getZScore(entry.getValue()));
+    public List<Pair<Double>> getZScores() {
+        List<Pair<Double>> zScores = new ArrayList<>();
+        for(Pair<T> pair : values) {
+            zScores.add(new Pair(pair.id, getZScore(pair.value)));
         }
-        return sortByValues(zScores);
+        Collections.sort(zScores);
+        return zScores;
     }
 
     public void addValue(String id, T value) {
         total += (double) value;
-        values.put(id, value);
+        values.add(new Pair<T>(id, value));
     }
 
-    public static Map<String, Double> combineZScores(Map<String, Double>... zScoreMaps) {
+    /*
+        - I know this looks inefficient but this is O(2n) instead of O(N) of using
+          only lists to combine because of time complexity of the lookup.
+        - Using max value as the default to fix skewing of values not in each table
+     */
+    public static List<Pair<Double>> combineZScores(List<Pair<Double>>... zScoreLists) {
         Map<String, Double> combinedZScoreMap = new HashMap<>();
-        for(Map<String, Double> map: zScoreMaps) {
-            for(Map.Entry<String, Double> entry: map.entrySet()) {
-                double sumByKey = combinedZScoreMap.getOrDefault(entry.getKey(), 0.0d);
-                sumByKey += entry.getValue();
-                combinedZScoreMap.put(entry.getKey(), sumByKey);
+        for(List<Pair<Double>> list: zScoreLists) {
+            for(Pair<Double> pair : list) {
+                double sumByKey = combinedZScoreMap.getOrDefault(pair.id, Double.MAX_VALUE);
+                sumByKey += pair.value;
+                combinedZScoreMap.put(pair.id, sumByKey);
             }
         }
-        return combinedZScoreMap;
+        List<Pair<Double>> combinedZScoreList = new ArrayList<>();
+        for(Map.Entry<String, Double> entry: combinedZScoreMap.entrySet()) {
+            combinedZScoreList.add(new Pair<>(entry.getKey(), entry.getValue()));
+        }
+        return combinedZScoreList;
     }
 
     public static void main(String[] args) {
+        Index<Double> happiness = new Index<>();
+        happiness.addValue("Dallas", 5.0d);
+        happiness.addValue("Detroit", 7.0d);
+        happiness.addValue("Miami", 6.3d);
+        happiness.addValue("Denver", 5.1d);
+        happiness.addValue("Tokyo", 4.2d);
+        happiness.addValue("New York", 6.9d);
+        happiness.addValue("Tuscaloosa", 3.4d);
+        happiness.addValue("Mobile", 8.5d);
+        happiness.addValue("Chicago", 7.1d);
 
-
-
+        List<Pair<Double>> zScores = happiness.getZScores();
+        System.out.println(zScores);
     }
 
-    // Author: Chaitanya Singh
-    // https://beginnersbook.com/2014/07/how-to-sort-a-treemap-by-value-in-java/
-    public static <K, V extends Comparable<V>>
-    Map<K, V> sortByValues(final Map<K, V> map) {
-        Comparator<K> valueComparator =
-                new Comparator<K>() {
-                    public int compare(K k1, K k2) {
-                        int compare =
-                                map.get(k1).compareTo(map.get(k2));
-                        if (compare == 0)
-                            return 1;
-                        else
-                            return compare;
-                    }
-                };
-
-        Map<K, V> sortedByValues =
-                new TreeMap<K, V>(valueComparator);
-        sortedByValues.putAll(map);
-        return sortedByValues;
-    }
+//    // Author: Chaitanya Singh
+//    // https://beginnersbook.com/2014/07/how-to-sort-a-treemap-by-value-in-java/
+//    public static <K, V extends Comparable<V>>
+//    Map<K, V> sortByValues(final Map<K, V> map) {
+//        Comparator<K> valueComparator =
+//                new Comparator<K>() {
+//                    public int compare(K k1, K k2) {
+//                        int compare =
+//                                map.get(k1).compareTo(map.get(k2));
+//                        if (compare == 0)
+//                            return 1;
+//                        else
+//                            return compare;
+//                    }
+//                };
+//
+//        Map<K, V> sortedByValues =
+//                new TreeMap<K, V>(valueComparator);
+//        sortedByValues.putAll(map);
+//        return sortedByValues;
+//    }
 
 }
