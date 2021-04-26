@@ -94,7 +94,7 @@ public class Index<T extends Number & Comparable<T>> {
     public List<Pair<Double>> getZScores() {
         List<Pair<Double>> zScores = new ArrayList<>();
         for(Pair<T> pair : values) {
-            zScores.add(new Pair(pair.id, getZScore(pair.value)));
+            zScores.add(new Pair<>(pair.id, getZScore(pair.value)));
         }
         Collections.sort(zScores);
         return zScores;
@@ -102,8 +102,8 @@ public class Index<T extends Number & Comparable<T>> {
 
     public void addValue(String id, T value) {
         total += (Double) value;
-        System.out.println((Double) value);
-        values.add(new Pair<T>(id, value));
+        System.out.println(value);
+        values.add(new Pair<>(id, value));
     }
 
     /*
@@ -128,16 +128,16 @@ public class Index<T extends Number & Comparable<T>> {
     }
 
     public static void main(String[] args) {
-        Index<Double> happiness = new Index<>();
-        happiness.addValue("Dallas", 5.0d);
-        happiness.addValue("Detroit", 7.0d);
-        happiness.addValue("Miami", 6.3d);
-        happiness.addValue("Denver", 5.1d);
-        happiness.addValue("Tokyo", 4.2d);
-        happiness.addValue("New York", 6.9d);
-        happiness.addValue("Tuscaloosa", 3.4d);
-        happiness.addValue("Mobile", 8.5d);
-        happiness.addValue("Chicago", 7.1d);
+        Index<Float> happiness = new Index<>();
+        happiness.addValue("Dallas", 5.0f);
+        happiness.addValue("Detroit", 7.0f);
+        happiness.addValue("Miami", 6.3f);
+        happiness.addValue("Denver", 5.1f);
+        happiness.addValue("Tokyo", 4.2f);
+        happiness.addValue("New York", 6.9f);
+        happiness.addValue("Tuscaloosa", 3.4f);
+        happiness.addValue("Mobile", 8.5f);
+        happiness.addValue("Chicago", 7.1f);
 
         System.out.println(happiness.findStandardDev());
         System.out.println(happiness.findMean());
