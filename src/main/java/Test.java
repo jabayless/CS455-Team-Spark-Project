@@ -13,15 +13,13 @@ public class Test {
         }
 
         SparkSession spark = SparkSession.builder().appName("Java Spark Example").getOrCreate();
-        DataFrameReader dataFrameReader = spark.read();
-        Dataset<Row> dataFrame = dataFrameReader.option("header", "true")
-                                                .option("ignoreLeadingWhiteSpace", "true")
-                                                .option("ignoreTrailingWhiteSpace", "true")
-                                                .option("mode", "DROPMALFORMED")
-                                                .csv("hdfs://juneau:49666/data/1996.csv");
+        Dataset<Row> dataFrame = spark.read()
+                .option("header", "true")
+                .csv("hdfs://juneau:49666/home/spark/data/2018.csv");
 
         // path is found in core-site.xml
-        dataFrame.sample(1/1000.0).write().csv("hdfs://juneau:49666/home/spark/1996.csv");
+//        dataFrame.sample(1/1000.0).write().csv("hdfs://juneau:49666/home/spark/1996.csv");
+        dataFrame.printSchema();
         spark.close();
 
 
