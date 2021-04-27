@@ -21,7 +21,7 @@ public class Index<T extends Number & Comparable<T>> {
         List<Pair<Double>> zScoreList = index.getZScores();
 
     Combining Z-Score Maps (static):
-        Index.combineZScores(Map<String, Double>...)
+        Index.combineZScores(List<String, Double>...)
 
     Other:
       You can also find the mean directly or find the std dev:
