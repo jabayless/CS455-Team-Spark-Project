@@ -38,12 +38,12 @@ public class Index<T extends Number & Comparable<T>> {
 
         @Override
         public int compareTo(Pair<V> p) {
-            return this.value.compareTo(p.value);
+            return p.value.compareTo(this.value);
         }
 
         @Override
         public String toString() {
-            return "<" + id + ", " + value + ">";
+            return "<" + id + ", " + value + ">\n";
         }
     }
 
@@ -103,7 +103,6 @@ public class Index<T extends Number & Comparable<T>> {
 
     public void addValue(String id, T value) {
         total += (Double) value;
-        System.out.println(value);
         values.add(new Pair<>(id, value));
     }
 
@@ -116,7 +115,7 @@ public class Index<T extends Number & Comparable<T>> {
         Map<String, Double> combinedZScoreMap = new HashMap<>();
         for(List<Pair<Double>> list: zScoreLists) {
             for(Pair<Double> pair : list) {
-                double sumByKey = combinedZScoreMap.getOrDefault(pair.id, Double.MAX_VALUE);
+                double sumByKey = combinedZScoreMap.getOrDefault(pair.id, 0.0);
                 sumByKey += pair.value;
                 combinedZScoreMap.put(pair.id, sumByKey);
             }
@@ -125,14 +124,15 @@ public class Index<T extends Number & Comparable<T>> {
         for(Map.Entry<String, Double> entry: combinedZScoreMap.entrySet()) {
             combinedZScoreList.add(new Pair<>(entry.getKey(), entry.getValue()));
         }
+        Collections.sort(combinedZScoreList);
         return combinedZScoreList;
     }
 
     public static void main(String[] args) {
         List<List<String>> records = new ArrayList<>();
 
-        try (BufferedReader br = new BufferedReader(new FileReader("hdfs://juneau:49666/spark/complete.csv"))) {
-            String line;
+        try (BufferedReader br = new BufferedReader(new FileReader("../../cs/cs455/spark/complete.csv"))) {
+            String line = br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
                 records.add(Arrays.asList(values));
@@ -147,10 +147,16 @@ public class Index<T extends Number & Comparable<T>> {
         Index<Double> hhiIndex = new Index<>();
 
         for(List<String> row: records) {
-            String key = row.get(0);
-            Double avg = (Double.parseDouble(row.get(3)) / Double.parseDouble(row.get(4))) - 70.0;
-            Double coli = Double.parseDouble(row.get(9));
-            Double popdens = Double.parseDouble(row.get(8));
+            String key = row.get(5) + " " + row.get(1) + " " + row.get(0);
+            /*
+                So here, we take the Division of Total and Count to get the Average.
+                We take the difference between the Average and 70 degrees.
+                Now we want to be able to sort by closest to 0, to do this,
+                Take the absolute value
+             */
+            Double avg = -1 * Math.abs((Double.parseDouble(row.get(3))/ Double.parseDouble(row.get(4))) - 70.0);
+            Double coli = -1 * Double.parseDouble(row.get(9));
+            Double popdens = -1 * Double.parseDouble(row.get(8));
             Double hhi = Double.parseDouble(row.get(10));
 
             tempIndex.addValue(key, avg);
