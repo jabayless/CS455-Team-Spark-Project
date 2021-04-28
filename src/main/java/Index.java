@@ -1,6 +1,7 @@
-import com.clearspring.analytics.util.Pair;
-import org.apache.hadoop.util.hash.Hash;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 public class Index<T extends Number & Comparable<T>> {
@@ -128,20 +129,42 @@ public class Index<T extends Number & Comparable<T>> {
     }
 
     public static void main(String[] args) {
-        Index<Float> happiness = new Index<>();
-        happiness.addValue("Dallas", 5.0f);
-        happiness.addValue("Detroit", 7.0f);
-        happiness.addValue("Miami", 6.3f);
-        happiness.addValue("Denver", 5.1f);
-        happiness.addValue("Tokyo", 4.2f);
-        happiness.addValue("New York", 6.9f);
-        happiness.addValue("Tuscaloosa", 3.4f);
-        happiness.addValue("Mobile", 8.5f);
-        happiness.addValue("Chicago", 7.1f);
+        List<List<String>> records = new ArrayList<>();
 
-        System.out.println(happiness.findStandardDev());
-        System.out.println(happiness.findMean());
-        List<Pair<Double>> zScores = happiness.getZScores();
-        System.out.println(zScores);
+        try (BufferedReader br = new BufferedReader(new FileReader("hdfs://juneau:49666/spark/complete.csv"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                records.add(Arrays.asList(values));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Index<Double> tempIndex = new Index<>();
+        Index<Double> coliIndex = new Index<>();
+        Index<Double> popdensIndex = new Index<>();
+        Index<Double> hhiIndex = new Index<>();
+
+        for(List<String> row: records) {
+            String key = row.get(0);
+            Double avg = (Double.parseDouble(row.get(3)) / Double.parseDouble(row.get(4))) - 70.0;
+            Double coli = Double.parseDouble(row.get(9));
+            Double popdens = Double.parseDouble(row.get(8));
+            Double hhi = Double.parseDouble(row.get(10));
+
+            tempIndex.addValue(key, avg);
+            coliIndex.addValue(key, coli);
+            popdensIndex.addValue(key, popdens);
+            hhiIndex.addValue(key, hhi);
+        }
+
+        List<Index.Pair<Double>> tempZScores = tempIndex.getZScores();
+        List<Index.Pair<Double>> coliZScores = coliIndex.getZScores();
+        List<Index.Pair<Double>> popdensZScores = popdensIndex.getZScores();
+        List<Index.Pair<Double>> hhiZScores = hhiIndex.getZScores();
+
+        List<Index.Pair<Double>> happinessZScores = Index.combineZScores(tempZScores, coliZScores, popdensZScores, hhiZScores);
+        System.out.println(happinessZScores.toString());
     }
 }

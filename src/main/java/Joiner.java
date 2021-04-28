@@ -1,8 +1,11 @@
+
+import org.apache.spark.api.java.function.ForeachFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import static org.apache.spark.sql.functions.expr;
+import java.util.List;
+
 import static org.apache.spark.sql.functions.lower;
 
 public class Joiner {
@@ -90,9 +93,10 @@ public class Joiner {
                 dataCitiesPopCol.col("state_name").equalTo(hhIncome.col("State"))
         ).drop("State").withColumnRenamed("Median", "Median House Income");
 
-//        completeJoin.printSchema();
-//        completeJoin.show(500);
-        completeJoin.coalesce(1).write().option("header", true).csv("hdfs://juneau:49666/spark/out");
+        completeJoin.printSchema();
+        completeJoin.show(500);
+
+//        completeJoin.coalesce(1).write().option("header", true).csv("hdfs://juneau:49666/spark/out");
 
         spark.close();
     }
