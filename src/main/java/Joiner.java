@@ -1,10 +1,7 @@
 
-import org.apache.spark.api.java.function.ForeachFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-
-import java.util.List;
 
 import static org.apache.spark.sql.functions.lower;
 
@@ -47,47 +44,29 @@ public class Joiner {
                 .withColumnRenamed("City", "city_name")
                 .withColumnRenamed("Population Density (Persons/Square Mile)", "Pop. Density");
 
-        // Drop extra data
         Dataset<Row> truncCities = cities.drop("city_ascii", "county_fips", "county_name", "lat", "lng", "density", "source", "military", "incorporated", "timezone", "ranking", "zips", "id")
                                          .withColumnRenamed("state_id", "state_abbrv");
         Dataset<Row> dataCities = stations.join(data,
                 stations.col("STATION_ID").equalTo(data.col("station"))
         ).drop("station", "ELEVATION", "LNG", "LAT");
 
-//        dataCities.printSchema();
-//        dataCities.show();
-//        truncCities.printSchema();
-//        truncCities.show();
 
         Dataset<Row> dataCitiesStates = dataCities.join(truncCities,
                 lower(dataCities.col("STATION_NAME")).contains(lower(truncCities.col("city")))
                         .and(dataCities.col("STATE_ID").equalTo(truncCities.col("state_abbrv")))
         ).drop("state_abbrv");
 
-//        dataCitiesStates.printSchema();
-//        dataCitiesStates.show(500);
-//        popDensity.printSchema();
-//        popDensity.show();
-
         Dataset<Row> dataCitiesPop = dataCitiesStates.join(popDensity,
                 lower(dataCitiesStates.col("city")).equalTo(lower(popDensity.col("city_name")))
                         .and(lower(dataCitiesStates.col("state_name")).equalTo(lower(popDensity.col("State"))))
         ).drop("Index", "State", "2016 Population", "Land Area (Square Miles)", "city_name");
 
-//        dataCitiesPop.printSchema();
-//        dataCitiesPop.show(550);
-//        colIndex.printSchema();
-//        colIndex.show();
 
         Dataset<Row> dataCitiesPopCol = dataCitiesPop.join(colIndex,
                 dataCitiesPop.col("city").equalTo(colIndex.col("city_name"))
                         .and(dataCitiesPop.col("state_id").equalTo(colIndex.col("State")))
         ).drop("State", "city_name");
 
-//        dataCitiesPopCol.printSchema();
-//        dataCitiesPopCol.show();
-//        hhIncome.printSchema();
-//        hhIncome.show();
 
         Dataset<Row> completeJoin = dataCitiesPopCol.join(hhIncome,
                 dataCitiesPopCol.col("state_name").equalTo(hhIncome.col("State"))
@@ -96,7 +75,7 @@ public class Joiner {
         completeJoin.printSchema();
         completeJoin.show(500);
 
-//        completeJoin.coalesce(1).write().option("header", true).csv("hdfs://juneau:49666/spark/out");
+        completeJoin.coalesce(1).write().option("header", true).csv("hdfs://juneau:49666/spark/out");
 
         spark.close();
     }

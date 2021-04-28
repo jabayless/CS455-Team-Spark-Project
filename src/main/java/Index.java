@@ -1,7 +1,5 @@
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class Index<T extends Number & Comparable<T>> {
@@ -43,7 +41,7 @@ public class Index<T extends Number & Comparable<T>> {
 
         @Override
         public String toString() {
-            return "<" + id + ", " + value + ">\n";
+            return  id + ", " + value;
         }
     }
 
@@ -128,14 +126,14 @@ public class Index<T extends Number & Comparable<T>> {
         return combinedZScoreList;
     }
 
-    public static void main(String[] args) {
-        List<List<String>> records = new ArrayList<>();
+    public static void main(String[] args) throws IOException {
+        List<List<String>> dataRows = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new FileReader("../../cs/cs455/spark/complete.csv"))) {
             String line = br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
-                records.add(Arrays.asList(values));
+                dataRows.add(Arrays.asList(values));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -146,8 +144,8 @@ public class Index<T extends Number & Comparable<T>> {
         Index<Double> popdensIndex = new Index<>();
         Index<Double> hhiIndex = new Index<>();
 
-        for(List<String> row: records) {
-            String key = row.get(5) + " " + row.get(1) + " " + row.get(0);
+        for(List<String> row: dataRows) {
+            String key = row.get(5) + ", " + row.get(1) + ", " + row.get(0);
             /*
                 So here, we take the Division of Total and Count to get the Average.
                 We take the difference between the Average and 70 degrees.
@@ -172,5 +170,14 @@ public class Index<T extends Number & Comparable<T>> {
 
         List<Index.Pair<Double>> happinessZScores = Index.combineZScores(tempZScores, coliZScores, popdensZScores, hhiZScores);
         System.out.println(happinessZScores.toString());
+
+        //Write to file
+        PrintWriter pw = new PrintWriter(new FileWriter("../../cs/cs455/spark/zscores.csv"));
+        String header = "CITY, STATE, STATION_ID, HAPPINESS_SCORE\n";
+        pw.write(header);
+        for(Index.Pair<Double> row: happinessZScores) {
+            pw.append(row.toString() + "\n");
+        }
+        pw.close();
     }
 }
