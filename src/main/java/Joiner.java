@@ -9,40 +9,89 @@ public class Joiner {
     public static void main(String[] args) throws Exception {
 
         SparkSession spark = SparkSession.builder().appName("Java Spark Example").getOrCreate();
-        Dataset<Row> states = spark.read()
-                .option("header", "true")
-                .option("ignoreLeadingWhiteSpace", true)
-                .option("ignoreTrailingWhiteSpace", true)
-                .csv("hdfs://juneau:49666/spark/data/states.csv");
         Dataset<Row> stations = spark.read()
                 .option("header", "true")
                 .option("ignoreLeadingWhiteSpace", true)
                 .option("ignoreTrailingWhiteSpace", true)
-                .csv("hdfs://juneau:49666/spark/data/stations_condensed.csv");
+                .csv("hdfs://juneau:49666/spark/data/full-ghcnd-stations.csv");
         Dataset<Row> cities = spark.read()
                 .option("header", "true")
                 .option("ignoreLeadingWhiteSpace", true)
                 .option("ignoreTrailingWhiteSpace", true)
                 .csv("hdfs://juneau:49666/spark/data/uscities.csv");
+        Dataset<Row> data = spark.read()
+                .option("header", "true")
+                .option("ignoreLeadingWhiteSpace", true)
+                .option("ignoreTrailingWhiteSpace", true)
+                .csv("hdfs://juneau:49666/spark/data/max_min.csv")
+                .withColumnRenamed("STATION_ID", "station");
+        Dataset<Row> colIndex = spark.read()
+                .option("header", "true")
+                .option("ignoreLeadingWhiteSpace", true)
+                .option("ignoreTrailingWhiteSpace", true)
+                .csv("hdfs://juneau:49666/spark/data/colindex.csv")
+                .withColumnRenamed("City", "city_name");
+        Dataset<Row> hhIncome = spark.read()
+                .option("header", "true")
+                .option("ignoreLeadingWhiteSpace", true)
+                .option("ignoreTrailingWhiteSpace", true)
+                .csv("hdfs://juneau:49666/spark/data/hhincome.csv");
+        Dataset<Row> popDensity = spark.read()
+                .option("header", "true")
+                .option("ignoreLeadingWhiteSpace", true)
+                .option("ignoreTrailingWhiteSpace", true)
+                .csv("hdfs://juneau:49666/spark/data/uscitypopdensity.csv")
+                .withColumnRenamed("City", "city_name")
+                .withColumnRenamed("Population Density (Persons/Square Mile)", "Pop. Density");
 
         // Drop extra data
-        Dataset<Row> truncCities = cities.drop("city_ascii", "county_fips", "county_name", "lat", "lng", "population", "density", "source", "military", "incorporated", "timezone", "ranking", "zips", "id");
-        // Extract state from station id
-        Dataset<Row> stateStations = stations.withColumn("STATE_ID", expr("substr(STATION_ID, 4, 2)"));
-        // Grab only 1 station from each city
-        Dataset<Row> uniqueStations = stateStations.dropDuplicates("STATION_NAME");
-        // join based on city and state, drop extra, and sort
-        Dataset<Row> joined = uniqueStations.join(truncCities,
-                lower(uniqueStations.col("STATION_NAME")).equalTo(lower(truncCities.col("city")))
-                        .and(uniqueStations.col("STATE_ID").equalTo(truncCities.col("state_id")))
-        ).drop("STATION_NAME", "STATE_ID").sort("state_name");
+        Dataset<Row> truncCities = cities.drop("city_ascii", "county_fips", "county_name", "lat", "lng", "density", "source", "military", "incorporated", "timezone", "ranking", "zips", "id")
+                                         .withColumnRenamed("state_id", "state_abbrv");
+        Dataset<Row> dataCities = stations.join(data,
+                stations.col("STATION_ID").equalTo(data.col("station"))
+        ).drop("station", "ELEVATION", "LNG", "LAT");
 
-//        states.printSchema();
-//        stations.printSchema();
-//        cities.printSchema();
+        dataCities.printSchema();
+        dataCities.show();
 //        truncCities.printSchema();
+//        truncCities.show();
 
-        joined.show(500);
+        Dataset<Row> dataCitiesStates = dataCities.join(truncCities,
+                lower(dataCities.col("STATION_NAME")).contains(lower(truncCities.col("city")))
+                        .and(dataCities.col("STATE_ID").equalTo(truncCities.col("state_abbrv")))
+        ).drop("state_abbrv");
+
+        dataCitiesStates.printSchema();
+        dataCitiesStates.show(500);
+        popDensity.printSchema();
+        popDensity.show();
+
+        Dataset<Row> dataCitiesPop = dataCitiesStates.join(popDensity,
+                lower(dataCitiesStates.col("city")).equalTo(lower(popDensity.col("city_name")))
+                        .and(lower(dataCitiesStates.col("state_name")).equalTo(lower(popDensity.col("State"))))
+        ).drop("Index", "State", "2016 Population", "Land Area (Square Miles)", "city_name");
+
+        dataCitiesPop.printSchema();
+        dataCitiesPop.show(550);
+        colIndex.printSchema();
+        colIndex.show();
+
+        Dataset<Row> dataCitiesPopCol = dataCitiesPop.join(colIndex,
+                dataCitiesPop.col("city").equalTo(colIndex.col("city_name"))
+                        .and(dataCitiesPop.col("state_id").equalTo(colIndex.col("State")))
+        ).drop("State", "city_name");
+
+        dataCitiesPopCol.printSchema();
+        dataCitiesPopCol.show();
+        hhIncome.printSchema();
+        hhIncome.show();
+
+        Dataset<Row> completeJoin = dataCitiesPopCol.join(hhIncome,
+                dataCitiesPopCol.col("state_name").equalTo(hhIncome.col("State"))
+        ).drop("State").withColumnRenamed("Median", "Median House Income");
+
+        completeJoin.printSchema();
+        completeJoin.show(500);
 
         spark.close();
     }

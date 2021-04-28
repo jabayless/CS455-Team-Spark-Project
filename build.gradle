@@ -18,4 +18,5 @@ dependencies{
     compile group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: '3.1.2'
     compile group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.1.2'
 
+
 }
