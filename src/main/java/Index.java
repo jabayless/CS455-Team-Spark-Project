@@ -173,10 +173,11 @@ public class Index<T extends Number & Comparable<T>> {
 
         //Write to file
         PrintWriter pw = new PrintWriter(new FileWriter("../../cs/cs455/spark/zscores.csv"));
-        String header = "CITY, STATE, STATION_ID, HAPPINESS_SCORE\n";
+        String header = "RANK, CITY, STATE, STATION_ID, HAPPINESS_SCORE\n";
         pw.write(header);
+        int rank = 0;
         for(Index.Pair<Double> row: happinessZScores) {
-            pw.append(row.toString() + "\n");
+            pw.append(++rank + ", " + row.toString() + "\n");
         }
         pw.close();
     }
