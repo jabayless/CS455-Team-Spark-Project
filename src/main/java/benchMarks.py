@@ -50,8 +50,8 @@ class BenchMark:
 
 def main():
         benchMark = BenchMark(sys.argv[1], sys.argv[2])
-        print ("Time to complete is: " + str(benchMark.getRunTime()) + "s. Total memory usage is " 
-        + str(benchMark.getMemoryUsage()) + ".")
+        print ("Total memory usage is " + str(benchMark.getMemoryUsage()) + "." + 
+        " Time to complete is: " + str(benchMark.getRunTime()) + "s.)
         benchMark.plotData()
 
 if __name__ == '__main__':
