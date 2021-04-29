@@ -126,10 +126,15 @@ public class Index<T extends Number & Comparable<T>> {
         return combinedZScoreList;
     }
 
+    public static Double convertTemp(Double tenthsCelsius) {
+        Double celsius = tenthsCelsius / 10;
+        return (celsius * 9/5) + 32;
+    }
+
     public static void main(String[] args) throws IOException {
         List<List<String>> dataRows = new ArrayList<>();
 
-        try (BufferedReader br = new BufferedReader(new FileReader("../../cs/cs455/spark/complete.csv"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader("../../cs/cs455/spark/complete_nodupes.csv"))) {
             String line = br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
@@ -143,6 +148,7 @@ public class Index<T extends Number & Comparable<T>> {
         Index<Double> coliIndex = new Index<>();
         Index<Double> popdensIndex = new Index<>();
         Index<Double> hhiIndex = new Index<>();
+        Index<Double> popIndex = new Index<>();
 
         for(List<String> row: dataRows) {
             String key = row.get(5) + ", " + row.get(1) + ", " + row.get(0);
@@ -152,27 +158,32 @@ public class Index<T extends Number & Comparable<T>> {
                 Now we want to be able to sort by closest to 0, to do this,
                 Take the absolute value
              */
-            Double avg = -1 * Math.abs((Double.parseDouble(row.get(3))/ Double.parseDouble(row.get(4))) - 70.0);
+            Double temp = convertTemp(Double.parseDouble(row.get(3))/ Double.parseDouble(row.get(4)));
+            System.out.println(temp + "    " + key);
+            Double avg = -1 * (Math.abs(temp) - 75.0);
             Double coli = -1 * Double.parseDouble(row.get(9));
             Double popdens = -1 * Double.parseDouble(row.get(8));
             Double hhi = Double.parseDouble(row.get(10));
+            Double pop = Double.parseDouble(row.get(7));
 
             tempIndex.addValue(key, avg);
             coliIndex.addValue(key, coli);
             popdensIndex.addValue(key, popdens);
             hhiIndex.addValue(key, hhi);
+            popIndex.addValue(key, pop);
         }
 
         List<Index.Pair<Double>> tempZScores = tempIndex.getZScores();
         List<Index.Pair<Double>> coliZScores = coliIndex.getZScores();
         List<Index.Pair<Double>> popdensZScores = popdensIndex.getZScores();
         List<Index.Pair<Double>> hhiZScores = hhiIndex.getZScores();
+        List<Index.Pair<Double>> popZScores = popIndex.getZScores();
 
-        List<Index.Pair<Double>> happinessZScores = Index.combineZScores(tempZScores, coliZScores, popdensZScores, hhiZScores);
+        List<Index.Pair<Double>> happinessZScores = Index.combineZScores(tempZScores, coliZScores, popdensZScores, hhiZScores, popZScores);
         System.out.println(happinessZScores.toString());
 
         //Write to file
-        PrintWriter pw = new PrintWriter(new FileWriter("../../cs/cs455/spark/zscores.csv"));
+        PrintWriter pw = new PrintWriter(new FileWriter("../../cs/cs455/spark/zscores75pop.csv"));
         String header = "RANK, CITY, STATE, STATION_ID, HAPPINESS_SCORE\n";
         pw.write(header);
         int rank = 0;

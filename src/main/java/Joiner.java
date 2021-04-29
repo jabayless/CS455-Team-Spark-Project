@@ -74,8 +74,7 @@ public class Joiner {
 
         completeJoin.printSchema();
         completeJoin.show(500);
-
-        completeJoin.coalesce(1).write().option("header", true).csv("hdfs://juneau:49666/spark/out");
+        completeJoin.dropDuplicates("city", "state_name").coalesce(1).write().option("header", true).csv("hdfs://juneau:49666/spark/out2/");
 
         spark.close();
     }
