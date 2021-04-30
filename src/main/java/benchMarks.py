@@ -21,14 +21,12 @@ class BenchMark:
 
     def getPid(self):
         #get the memory usage of the program
-        cmd = "java -cp " + self.classPath + " " + self.programName
-        subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        f = open("/home/jbayless/GitHub/Java/benchMarkScripts/pidFile", "r")
-        self.pid = f.read()
+        self.pid = subprocess.Popen(["java" , "-cp", self.classPath, self.programName], shell=False, stdout=subprocess.PIPE).pid
+        print (self.pid)
         return self.pid
 
     def getMemoryUsage(self):
-        memoryCommand = "sudo pmap " + self.getPid() + " | tail -n 1"
+        memoryCommand = "sudo pmap " + str(self.getPid()) + " | tail -n 1"
         javaProgram = subprocess.Popen(memoryCommand, shell=True, stdout=subprocess.PIPE)
         self.memoryUsage = str(javaProgram.stdout.read()).split(" ")[11][:-3]
         return self.memoryUsage
@@ -51,7 +49,7 @@ class BenchMark:
 def main():
         benchMark = BenchMark(sys.argv[1], sys.argv[2])
         print ("Total memory usage is " + str(benchMark.getMemoryUsage()) + "." + 
-        " Time to complete is: " + str(benchMark.getRunTime()) + "s.)
+        " Time to complete is: " + str(benchMark.getRunTime()) + "s.")
         benchMark.plotData()
 
 if __name__ == '__main__':
